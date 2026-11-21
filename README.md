@@ -10,21 +10,23 @@ frontend_files/   Streamlit UI: app.py, requirements.txt, Dockerfile            
 docker-compose.yml  starts both containers on a shared network
 ```
 
-## Run with Docker Compose
+## Run the containers
+
+**In a GitHub Codespace** (builds with the host network, because `pip install` inside a container can time out on the Codespaces bridge network):
+
 ```bash
-docker compose up --build -d
+docker build --network host -t superkart-backend ./backend_files
+docker build --network host -t superkart-frontend ./frontend_files
+docker network create superkart-net
+docker run -d --name superkart-backend --network superkart-net -p 7860:7860 --restart unless-stopped superkart-backend
+docker run -d --name superkart-frontend --network superkart-net -p 8501:8501 --restart unless-stopped \
+  -e BACKEND_URL=http://superkart-backend:7860 superkart-frontend
 ```
 
-## Or run the containers manually
+**On a machine with normal Docker networking** one command is enough:
+
 ```bash
-docker network create superkart-net
-
-docker build -t superkart-backend ./backend_files
-docker run -d --name superkart-backend --network superkart-net -p 7860:7860 superkart-backend
-
-docker build -t superkart-frontend ./frontend_files
-docker run -d --name superkart-frontend --network superkart-net -p 8501:8501 \
-  -e BACKEND_URL=http://superkart-backend:7860 superkart-frontend
+docker compose up --build -d
 ```
 
 In a GitHub Codespace, open the **Ports** tab and set port **7860** (API) and **8501** (UI) to *Public*.
